@@ -5,36 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ação Solidária de Natal - Grupo AKRK</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Biblioteca Lottie para renderizar animações profissionais -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie_light.min.js"></script>
     <style>
-        /* Animação dos Flocos de Neve */
-        @keyframes snowfall {
-            0% { transform: translateY(-10vh) translateX(0); opacity: 1; }
-            100% { transform: translateY(105vh) translateX(20px); opacity: 0.2; }
-        }
-        .snowflake {
+        /* Container de acumulação da neve no rodapé */
+        #snow-pile-container {
             position: fixed;
-            top: -10vh;
+            bottom: 0;
+            left: 0;
+            width: 100vw;
+            height: 0px;
+            background: linear-gradient(to top, rgba(255,255,255,0.95), rgba(255,255,255,0.4) 70%, transparent);
+            transition: height 12s ease-out;
+            pointer-events: none;
+            z-index: 55;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+        }
+
+        /* Flocos de neve individuais */
+        .falling-snowflake {
+            position: fixed;
+            top: -20px;
             background: #ffffff;
             border-radius: 50%;
             pointer-events: none;
-            animation: snowfall linear infinite;
             z-index: 60;
-        }
-
-        /* Animação do Papai Noel passando */
-        @keyframes flySanta {
-            0% { transform: translateX(-200px); opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { transform: translateX(110vw); opacity: 0; }
-        }
-        .santa-flying {
-            position: fixed;
-            top: 15%;
-            font-size: 50px;
-            pointer-events: none;
-            animation: flySanta 4s ease-in-out forwards;
-            z-index: 65;
+            box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
         }
     </style>
 </head>
@@ -176,12 +173,14 @@
         </div>
     </div>
 
-    <!-- POPUP FESTIVO DE SUCESSO -->
+    <!-- POPUP FESTIVO COM PAPAI NOEL LOTTIE E NEVE EMPILHANDO -->
     <div id="successModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-slate-800 border border-red-500/40 max-w-md w-full rounded-2xl p-8 shadow-2xl text-center relative overflow-hidden transform transition-all">
+        <div class="bg-slate-800 border border-red-500/40 max-w-md w-full rounded-2xl p-6 shadow-2xl text-center relative overflow-hidden transform transition-all">
             <div class="absolute -top-10 -right-10 w-32 h-32 bg-red-500/10 rounded-full blur-2xl"></div>
             
-            <div class="text-5xl mb-4">🎁🎄</div>
+            <!-- Animação Lottie do Papai Noel -->
+            <div id="lottieSanta" class="w-36 h-36 mx-auto mb-2"></div>
+
             <h3 class="text-xl font-bold text-white mb-2">Muito obrigado!</h3>
             <p class="text-red-300 font-medium text-base mb-6">Sua doação irá trazer muitos sorrisos neste natal</p>
             
@@ -191,9 +190,15 @@
         </div>
     </div>
 
+    <!-- Camada de acúmulo da neve -->
+    <div id="snow-pile-container"></div>
+
     <script>
         const scriptURL = 'https://script.google.com/macros/s/AKfycbxzztt9OuLeOspZnoBT08GXK-M6JMtjBHhJV6w7uNRhrU8Ir_6BcSYhyf0EZtSGGLk/exec'; 
         const IMGBB_API_KEY = 'e2e180d19645dabce9e0d3cd3680bb99';
+
+        let lottieAnimation = null;
+        let snowInterval = null;
 
         function openRulesModal() {
             document.getElementById('rulesModal').classList.remove('hidden');
@@ -204,29 +209,61 @@
 
         function closeSuccessModal() {
             document.getElementById('successModal').classList.add('hidden');
-            location.reload(); // Recarrega a página para limpar tudo para o próximo
+            document.getElementById('snow-pile-container').style.height = '0px';
+            if(snowInterval) clearInterval(snowInterval);
+            document.querySelectorAll('.falling-snowflake').forEach(el => el.remove());
+            location.reload();
         }
 
-        // Função para criar os efeitos visuais natalinos (Neve e Papai Noel)
-        function triggerChristmasFX() {
-            // 1. Papai Noel voador
-            const santa = document.createElement('div');
-            santa.className = 'santa-flying';
-            santa.innerHTML = '🛷🎅🎁';
-            document.body.appendChild(santa);
-            setTimeout(() => santa.remove(), 4000);
-
-            // 2. Chuva de Neve
-            for (let i = 0; i < 40; i++) {
-                const flake = document.createElement('div');
-                flake.className = 'snowflake';
-                flake.style.left = Math.random() * 100 + 'vw';
-                flake.style.width = flake.style.height = (Math.random() * 6 + 4) + 'px';
-                flake.style.animationDuration = (Math.random() * 3 + 2) + 's';
-                flake.style.animationDelay = (Math.random() * 2) + 's';
-                document.body.appendChild(flake);
-                setTimeout(() => flake.remove(), 5000);
+        // Inicializa a animação oficial Lottie do Papai Noel
+        function initLottieSanta() {
+            if (!lottieAnimation) {
+                lottieAnimation = lottie.loadAnimation({
+                    container: document.getElementById('lottieSanta'),
+                    renderer: 'svg',
+                    loop: true,
+                    autoplay: true,
+                    path: 'https://assets5.lottiefiles.com/packages/lf20_gSNKP3gUGZ.json' 
+                });
             }
+        }
+
+        // Sistema avançado de Neve Caindo e Empilhando
+        function startSnowstorm() {
+            const pile = document.getElementById('snow-pile-container');
+            pile.style.height = '45px'; // Vai subindo a neve no rodapé gradativamente
+
+            snowInterval = setInterval(() => {
+                const flake = document.createElement('div');
+                flake.className = 'falling-snowflake';
+                
+                const startX = Math.random() * window.innerWidth;
+                const size = Math.random() * 6 + 3; // Flocos de tamanhos variados
+                const duration = Math.random() * 3 + 2; // Velocidade de queda
+
+                flake.style.left = startX + 'px';
+                flake.style.width = size + 'px';
+                flake.style.height = size + 'px';
+                
+                document.body.appendChild(flake);
+
+                let startTime = null;
+
+                function fall(timestamp) {
+                    if (!startTime) startTime = timestamp;
+                    let progress = (timestamp - startTime) / (duration * 1000);
+                    
+                    if (progress < 1) {
+                        let currentY = progress * (window.innerHeight - 50);
+                        flake.style.transform = `translateY(${currentY}px)`;
+                        requestAnimationFrame(fall);
+                    } else {
+                        flake.remove(); // Remove o floco ao atingir o solo para otimizar memória
+                    }
+                }
+
+                requestAnimationFrame(fall);
+            }, 120); // Cria um novo floco a cada 120ms
         }
 
         const form = document.getElementById('donationForm');
@@ -276,9 +313,10 @@
                     body: JSON.stringify(payload)
                 });
 
-                // Dispara o popup com neve e o Papai Noel!
-                triggerChristmasFX();
+                // Exibe o popup festivo com o Papai Noel Lottie e a neve acumulando
                 document.getElementById('successModal').classList.remove('hidden');
+                initLottieSanta();
+                startSnowstorm();
 
             } catch (error) {
                 alert('Erro ao enviar. Tente novamente ou verifique o arquivo.');
