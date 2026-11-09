@@ -5,33 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ação Solidária de Natal - Grupo AKRK</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Biblioteca Lottie para renderizar animações profissionais -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie_light.min.js"></script>
+    <script src="https://unpkg.com/@dotlottie/player-component@2.7.12/dist/dotlottie-player.mjs" type="module"></script>
     <style>
-        /* Container de acumulação da neve no rodapé */
+        /* Camada de acúmulo da neve: Fica NO FUNDO (atrás do popup) */
         #snow-pile-container {
             position: fixed;
             bottom: 0;
             left: 0;
             width: 100vw;
             height: 0px;
-            background: linear-gradient(to top, rgba(255,255,255,0.95), rgba(255,255,255,0.4) 70%, transparent);
-            transition: height 12s ease-out;
+            background: linear-gradient(to top, rgba(255,255,255,0.98), rgba(255,255,255,0.7) 60%, rgba(255,255,255,0.2) 90%, transparent);
+            transition: height 0.5s linear;
             pointer-events: none;
-            z-index: 55;
-            border-top-left-radius: 12px;
-            border-top-right-radius: 12px;
+            z-index: 40; /* Fica atrás do modal de sucesso (z-index 50) */
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+            box-shadow: 0 -10px 25px rgba(255, 255, 255, 0.5);
         }
 
-        /* Flocos de neve individuais */
+        /* Flocos caindo: Passam POR CIMA de tudo (inclusive do popup) */
         .falling-snowflake {
             position: fixed;
             top: -20px;
             background: #ffffff;
             border-radius: 50%;
             pointer-events: none;
-            z-index: 60;
-            box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+            z-index: 60; /* Fica na frente do modal de sucesso (z-index 50) */
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.9);
         }
     </style>
 </head>
@@ -46,7 +46,6 @@
 
         <form id="donationForm" class="space-y-4">
             
-            <!-- Ciência das Regras -->
             <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-700/60">
                 <label class="flex items-start gap-3 cursor-pointer">
                     <input type="checkbox" id="aceiteRegras" required class="mt-1 h-4 w-4 rounded border-slate-700 bg-slate-900 text-red-600 focus:ring-red-500">
@@ -57,12 +56,10 @@
                 </label>
             </div>
 
-            <!-- Dados do participante -->
             <div class="border-t border-slate-700 pt-4">
                 <h3 class="text-sm font-semibold text-red-400 uppercase tracking-wide mb-3">Dados do Participante</h3>
             </div>
 
-            <!-- Empresa -->
             <div>
                 <label class="block text-sm font-medium text-slate-300 mb-1">Empresa</label>
                 <select id="empresa" required class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg focus:outline-none focus:border-red-500 text-white">
@@ -78,37 +75,31 @@
                 </select>
             </div>
 
-            <!-- Setor -->
             <div>
                 <label class="block text-sm font-medium text-slate-300 mb-1">Setor</label>
                 <input type="text" id="setor" required class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg focus:outline-none focus:border-red-500 text-white" placeholder="Ex: Comercial, Financeiro, RH...">
             </div>
 
-            <!-- Nome completo -->
             <div>
                 <label class="block text-sm font-medium text-slate-300 mb-1">Nome completo</label>
                 <input type="text" id="colaborador" required class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg focus:outline-none focus:border-red-500 text-white" placeholder="Seu nome completo">
             </div>
 
-            <!-- Equipe -->
             <div>
                 <label class="block text-sm font-medium text-slate-300 mb-1">Equipe</label>
                 <input type="text" id="equipe" required class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg focus:outline-none focus:border-red-500 text-white" placeholder="Nome da equipe / squad">
             </div>
 
-            <!-- Nome do supervisor -->
             <div>
                 <label class="block text-sm font-medium text-slate-300 mb-1">Nome do supervisor</label>
                 <input type="text" id="supervisor" required class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg focus:outline-none focus:border-red-500 text-white" placeholder="Nome do gestor/supervisor direto">
             </div>
 
-            <!-- Telefone -->
             <div>
                 <label class="block text-sm font-medium text-slate-300 mb-1">Telefone / WhatsApp</label>
                 <input type="tel" id="telefone" required class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg focus:outline-none focus:border-red-500 text-white" placeholder="(11) 99999-9999">
             </div>
 
-            <!-- Comprovante -->
             <div class="border-t border-slate-700 pt-4">
                 <h3 class="text-sm font-semibold text-red-400 uppercase tracking-wide mb-3">Comprovante de Doação</h3>
                 <label class="block text-sm font-medium text-slate-300 mb-1">Anexar nota fiscal da cesta básica adquirida</label>
@@ -173,13 +164,21 @@
         </div>
     </div>
 
-    <!-- POPUP FESTIVO COM PAPAI NOEL LOTTIE E NEVE EMPILHANDO -->
+    <!-- POPUP COM O LOTTIE (z-index 50) -->
     <div id="successModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
         <div class="bg-slate-800 border border-red-500/40 max-w-md w-full rounded-2xl p-6 shadow-2xl text-center relative overflow-hidden transform transition-all">
             <div class="absolute -top-10 -right-10 w-32 h-32 bg-red-500/10 rounded-full blur-2xl"></div>
             
-            <!-- Animação Lottie do Papai Noel -->
-            <div id="lottieSanta" class="w-36 h-36 mx-auto mb-2"></div>
+            <div class="flex justify-center mb-2">
+                <dotlottie-player 
+                    src="https://lottie.host/18c274e9-0b52-457c-b42c-622d87e5f7dc/IwkH3hM7Ma.lottie" 
+                    background="transparent" 
+                    speed="1" 
+                    style="width: 140px; height: 140px;" 
+                    loop 
+                    autoplay>
+                </dotlottie-player>
+            </div>
 
             <h3 class="text-xl font-bold text-white mb-2">Muito obrigado!</h3>
             <p class="text-red-300 font-medium text-base mb-6">Sua doação irá trazer muitos sorrisos neste natal</p>
@@ -190,15 +189,15 @@
         </div>
     </div>
 
-    <!-- Camada de acúmulo da neve -->
+    <!-- CAMADA DE ACÚMULO DA NEVE (z-index 40 -> Fica estritamente atrás do Popup) -->
     <div id="snow-pile-container"></div>
 
     <script>
         const scriptURL = 'https://script.google.com/macros/s/AKfycbxzztt9OuLeOspZnoBT08GXK-M6JMtjBHhJV6w7uNRhrU8Ir_6BcSYhyf0EZtSGGLk/exec'; 
         const IMGBB_API_KEY = 'e2e180d19645dabce9e0d3cd3680bb99';
 
-        let lottieAnimation = null;
         let snowInterval = null;
+        let pileHeight = 0;
 
         function openRulesModal() {
             document.getElementById('rulesModal').classList.remove('hidden');
@@ -215,31 +214,25 @@
             location.reload();
         }
 
-        // Inicializa a animação oficial Lottie do Papai Noel
-        function initLottieSanta() {
-            if (!lottieAnimation) {
-                lottieAnimation = lottie.loadAnimation({
-                    container: document.getElementById('lottieSanta'),
-                    renderer: 'svg',
-                    loop: true,
-                    autoplay: true,
-                    path: 'https://assets5.lottiefiles.com/packages/lf20_gSNKP3gUGZ.json' 
-                });
-            }
-        }
-
-        // Sistema avançado de Neve Caindo e Empilhando
         function startSnowstorm() {
             const pile = document.getElementById('snow-pile-container');
-            pile.style.height = '45px'; // Vai subindo a neve no rodapé gradativamente
+            pileHeight = 0;
 
+            // Faz a neve acumular continuamente subindo até quase encher a tela
             snowInterval = setInterval(() => {
+                // Sobe o monte de neve progressivamente até atingir o limite de 85% da tela
+                if (pileHeight < window.innerHeight * 0.85) {
+                    pileHeight += 1.5; 
+                    pile.style.height = pileHeight + 'px';
+                }
+
+                // Cria flocos caindo que passam na FRENTE do popup (z-index 60)
                 const flake = document.createElement('div');
                 flake.className = 'falling-snowflake';
                 
                 const startX = Math.random() * window.innerWidth;
-                const size = Math.random() * 6 + 3; // Flocos de tamanhos variados
-                const duration = Math.random() * 3 + 2; // Velocidade de queda
+                const size = Math.random() * 7 + 3; 
+                const duration = Math.random() * 3 + 2; 
 
                 flake.style.left = startX + 'px';
                 flake.style.width = size + 'px';
@@ -254,16 +247,16 @@
                     let progress = (timestamp - startTime) / (duration * 1000);
                     
                     if (progress < 1) {
-                        let currentY = progress * (window.innerHeight - 50);
+                        let currentY = progress * window.innerHeight;
                         flake.style.transform = `translateY(${currentY}px)`;
                         requestAnimationFrame(fall);
                     } else {
-                        flake.remove(); // Remove o floco ao atingir o solo para otimizar memória
+                        flake.remove(); 
                     }
                 }
 
                 requestAnimationFrame(fall);
-            }, 120); // Cria um novo floco a cada 120ms
+            }, 80); 
         }
 
         const form = document.getElementById('donationForm');
@@ -313,9 +306,7 @@
                     body: JSON.stringify(payload)
                 });
 
-                // Exibe o popup festivo com o Papai Noel Lottie e a neve acumulando
                 document.getElementById('successModal').classList.remove('hidden');
-                initLottieSanta();
                 startSnowstorm();
 
             } catch (error) {
