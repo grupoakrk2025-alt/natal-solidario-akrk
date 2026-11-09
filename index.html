@@ -5,6 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ação Solidária de Natal - Grupo AKRK</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Animação dos Flocos de Neve */
+        @keyframes snowfall {
+            0% { transform: translateY(-10vh) translateX(0); opacity: 1; }
+            100% { transform: translateY(105vh) translateX(20px); opacity: 0.2; }
+        }
+        .snowflake {
+            position: fixed;
+            top: -10vh;
+            background: #ffffff;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: snowfall linear infinite;
+            z-index: 60;
+        }
+
+        /* Animação do Papai Noel passando */
+        @keyframes flySanta {
+            0% { transform: translateX(-200px); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateX(110vw); opacity: 0; }
+        }
+        .santa-flying {
+            position: fixed;
+            top: 15%;
+            font-size: 50px;
+            pointer-events: none;
+            animation: flySanta 4s ease-in-out forwards;
+            z-index: 65;
+        }
+    </style>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between">
 
@@ -92,8 +124,6 @@
                 Enviar Participação
             </button>
         </form>
-
-        <div id="statusMessage" class="mt-4 text-center text-sm hidden"></div>
     </div>
 
     <!-- MODAL DE REGRAS -->
@@ -146,6 +176,21 @@
         </div>
     </div>
 
+    <!-- POPUP FESTIVO DE SUCESSO -->
+    <div id="successModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-slate-800 border border-red-500/40 max-w-md w-full rounded-2xl p-8 shadow-2xl text-center relative overflow-hidden transform transition-all">
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-red-500/10 rounded-full blur-2xl"></div>
+            
+            <div class="text-5xl mb-4">🎁🎄</div>
+            <h3 class="text-xl font-bold text-white mb-2">Muito obrigado!</h3>
+            <p class="text-red-300 font-medium text-base mb-6">Sua doação irá trazer muitos sorrisos neste natal</p>
+            
+            <button onclick="closeSuccessModal()" class="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl transition shadow-lg shadow-red-600/30">
+                Participar novamente / Fechar
+            </button>
+        </div>
+    </div>
+
     <script>
         const scriptURL = 'https://script.google.com/macros/s/AKfycbxzztt9OuLeOspZnoBT08GXK-M6JMtjBHhJV6w7uNRhrU8Ir_6BcSYhyf0EZtSGGLk/exec'; 
         const IMGBB_API_KEY = 'e2e180d19645dabce9e0d3cd3680bb99';
@@ -157,9 +202,35 @@
             document.getElementById('rulesModal').classList.add('hidden');
         }
 
+        function closeSuccessModal() {
+            document.getElementById('successModal').classList.add('hidden');
+            location.reload(); // Recarrega a página para limpar tudo para o próximo
+        }
+
+        // Função para criar os efeitos visuais natalinos (Neve e Papai Noel)
+        function triggerChristmasFX() {
+            // 1. Papai Noel voador
+            const santa = document.createElement('div');
+            santa.className = 'santa-flying';
+            santa.innerHTML = '🛷🎅🎁';
+            document.body.appendChild(santa);
+            setTimeout(() => santa.remove(), 4000);
+
+            // 2. Chuva de Neve
+            for (let i = 0; i < 40; i++) {
+                const flake = document.createElement('div');
+                flake.className = 'snowflake';
+                flake.style.left = Math.random() * 100 + 'vw';
+                flake.style.width = flake.style.height = (Math.random() * 6 + 4) + 'px';
+                flake.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                flake.style.animationDelay = (Math.random() * 2) + 's';
+                document.body.appendChild(flake);
+                setTimeout(() => flake.remove(), 5000);
+            }
+        }
+
         const form = document.getElementById('donationForm');
         const submitBtn = document.getElementById('submitBtn');
-        const statusMessage = document.getElementById('statusMessage');
 
         form.addEventListener('submit', async e => {
             e.preventDefault();
@@ -205,16 +276,12 @@
                     body: JSON.stringify(payload)
                 });
 
-                statusMessage.textContent = 'Participação enviada com sucesso! Muito obrigado!';
-                statusMessage.className = 'mt-4 text-center text-sm text-green-400 font-medium';
-                statusMessage.classList.remove('hidden');
-                form.reset();
+                // Dispara o popup com neve e o Papai Noel!
+                triggerChristmasFX();
+                document.getElementById('successModal').classList.remove('hidden');
 
             } catch (error) {
-                statusMessage.textContent = 'Erro ao enviar. Tente novamente ou verifique o arquivo.';
-                statusMessage.className = 'mt-4 text-center text-sm text-red-400 font-medium';
-                statusMessage.classList.remove('hidden');
-            } finally {
+                alert('Erro ao enviar. Tente novamente ou verifique o arquivo.');
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Enviar Participação';
             }
